@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 7.4.3.2 (Linux)"/>
+	<meta name="created" content="00:00:00"/>
+	<meta name="changed" content="00:00:00"/>
+	<style type="text/css">
+		@page { size: 8.27in 11.69in; margin: 0.9in }
+		p { line-height: 115%; margin-bottom: 0.1in; background: transparent }
+		pre { background: transparent }
+		pre.western { font-family: "Liberation Mono", monospace; font-size: 10pt }
+		pre.cjk { font-family: "NSimSun", monospace; font-size: 10pt }
+		pre.ctl { font-family: "Liberation Mono", monospace; font-size: 10pt }
+	</style>
+</head>
+<body lang="en-US" link="#000080" vlink="#800000" dir="ltr"><pre class="western">#This is a copy paste solution for Test 2 for Unix, amd all work is done on s01 unless specified, open s01 from w01 for ease of use
+#Make sure to open all vms first
+#Part A (start with w01 {dont ssh into s01 yet})
+curl https://csunix.mohawkcollege.ca/~long/courses/LinAdmin/test1/fresh_check.zip --output fresh_check.zip ;unzip fresh_check.zip ;scp fresh_check.sh root@s01:/tmp ;ssh root@s01 &quot;/tmp/fresh_check.sh&quot;
+
+
+
+#Part B and C  D (ish)(ssh into s01 first)
+tar cf /tmp/etc.tar /etc ;cd /opt/Mohawk ;find ./books | cpio -ov &gt; /tmp/books.cpio ;tar -cf /tmp/foo.tar /opt/Mohawk/data/4_f.green ;tar -rf /tmp/foo.tar /opt/Mohawk/books/ShelockHolmes.txt ;yum install net-tools ;yum install nfs-utils ;firewall-cmd --permanent --add-service=nfs3 ;firewall-cmd --reload ;mkdir -p /nfs/w01 ;chmod 777 /nfs/w01 ;useradd w01user -u 5555 ;echo &quot;/nfs/w01 w01(rw,sync,all_squash,anonuid=5555,anongid=5555)&quot; &gt;&gt; /etc/exports ;systemctl enable --now nfs-server ;exportfs -ar ;ssh root@w01 &quot;mkdir -p /s01/share ;echo &quot;s01:/nfs/w01  /s01/share   nfs  defaults  0 0&quot; &gt;&gt; /etc/fstab ;mount /s01/share ;touch /s01/share/testfile.txt&quot ; yum install httpd ;vi /etc/httpd/conf/httpd.conf
+
+#paste this at the bottom:
+CustomLog &quot;| /bin/sh -c '/usr/bin/tee -a /var/log/httpd/httpd-access.log | /usr/bin/logger -thttpd -plocal5.notice'&quot; combined
+
+#now cotinue (s01)....
+firewall-cmd --permanent --add-port=514/tcp ;firewall-cmd --reload ;service httpd restart ;vi /etc/rsyslog.conf
+
+#1. remove hashtag from &quot;..module(load=&quot;imtcp..&quot;&quot; and hashtag from &quot;..input(type=&quot;imtcp&quot;..&quot;
+#2. add this rule in before the other rules (2 lines):
+$template myFormat,&quot;%timegenerated% %HOSTNAME% %syslogtag%%syslogfacility-text%.%syslogpriority-text%: %msg%\n&quot;
+local5.*                                                /var/log/web.log;myFormat
+
+#now continue(s01)....
+service rsyslog restart ;curl http://localhost
+
+#on w01 (root)
+vi /etc/rsyslog.conf
+
+#add the following line at the end of the conf(w01 root) ( {shift + g} to get to bottom quick)
+authpriv.* @@s01:514
+
+#now continue on w01(root)
+service rsyslog restart ;logger -p authpriv.info &quot;This is a test message from w01&quot;
+
+#on s01 (OPTIONAL)
+
+#(to test httpd and authpriv)(weblog should show local5)(secure should show authpriv w01)
+cat /var/log/web.log ;cat /var/log/secure
+
+
+
+#Part E (on alice w01 NO ROOT)(type exit to exit root)
+curl https://csunix.mohawkcollege.ca/~long/courses/LinAdmin/test2/host_info_t2.zip --output host_info_t2.zip ;unzip host_info_t2.zip ;scp host_info_t2.sh root@s01:/tmp ;ssh root@s01 &quot;/tmp/host_info_t2.sh&quot; ; scp root@s01:/root/s01_report_t2.html alice@w01:/home/alice/Downloads ;firefox /home/alice/Downloads/s01_report_t2.html
+
+
+
+#now just upload your script from w01 /home/alice/Downloads to canvas !
+</pre>
+</body>
+</html>
